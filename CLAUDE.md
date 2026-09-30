@@ -25,6 +25,7 @@ Online women's fashion store (Sri Lanka). pnpm monorepo, TypeScript everywhere. 
   unless reading for display.
 - Every behaviour change to checkout, stock, payments or order status gets an integration test in `services/api/test/`.
 - Shared types/validation used by more than one app live in `packages/shared` (extensionless imports there).
+- Any storefront or customer-facing UI follows the `pavielle-brand` skill (`.claude/skills/pavielle-brand/SKILL.md`).
 
 ## Local environment
 - `docker-compose.yml` runs Postgres 16 (databases `pavielle` and `pavielle_test`, trust auth, port 5432); start it with `pnpm db:up`.
