@@ -1,0 +1,18 @@
+node_modules/
+.DS_Store
+
+# local env files (secrets stay out of git)
+.env
+.env.local
+.env.*.local
+
+# build output
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# terraform
+.terraform/
+*.tfstate
+*.tfstate.*
