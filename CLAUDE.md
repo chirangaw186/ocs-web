@@ -34,11 +34,37 @@ Online women's fashion store (Sri Lanka). pnpm monorepo, TypeScript everywhere. 
 - `services/api/.env` comes from `.env.example`; `apps/admin/.env.local` comes from its example.
 - Fresh setup: `pnpm install` → `pnpm db:up` → migrate → seed → `pnpm typecheck && pnpm test && pnpm build`.
 
+## Customer journeys
+Three journeys every change must keep working: **browse** (home → product → bag, no purchase),
+**cash on delivery** (bag → checkout → `AWAITING_CONFIRMATION` → staff call → `CONFIRMED` … `DELIVERED`, cash to courier),
+**card** (bag → checkout → `PENDING_PAYMENT` → PayHere → verified notify → `CONFIRMED`). Bank transfer also exists
+(`AWAITING_CONFIRMATION`, staff confirm), but the storefront shows no bank details yet.
+
+Facts the journeys depend on (change them in one place only):
+- Delivery: Rs. 400 flat, free from Rs. 15,000 (`DELIVERY_POLICY` in `packages/shared/src/pricing.ts`).
+- Stock holds: 30 min for PayHere, 48 h for COD and bank transfer (`HOLD_MINUTES`). Expired holds are cancelled at the next
+  checkout and by the hourly job.
+- Checkout limits: 1–20 lines, quantity 1–10 per line, Sri Lankan mobile (`07XXXXXXXX` / `+947XXXXXXXX`).
+- Customers are keyed by phone. `prepayOnly` customers cannot choose COD.
+
+When a change touches checkout, stock, payments or order status, its tests must cover the cases that apply:
+- several items, including the same SKU twice and a line that runs out of stock at checkout;
+- COD: placed, confirmed, cancelled by staff, hold expired, delivery failed then returned, prepay-only rejected;
+- card: paid, declined, cancelled on PayHere, tab closed (hold expires), paid after the hold expired (needs review),
+  duplicate notification, wrong amount, chargeback.
+
 ## Launch priorities (Phase 1 "Not built yet" in README)
 1. Product image upload — Cloudflare R2 presigned uploads (cheapest option).
 2. Order confirmation emails — SES.
 3. Policy and size-chart pages.
 4. Cloudflare Turnstile on checkout.
+
+Gaps found in the customer-journey walkthrough (2026-10-11), not yet scheduled:
+- Card cancel/decline empties the bag and the order keeps holding stock for 30 min (most serious).
+- No way to look up an order later (the API has `GET /store/orders/:ref?phone=`; the storefront has no page for it).
+- Bank transfer can be chosen but no bank details are shown, so it can't be completed.
+- Checkout errors show SKU codes ("Not enough stock for PV-SMD-01-BLS-M") and a network failure leaves the order state unknown.
+- No contact / WhatsApp link; no categories, search or filters; delivery fee only visible in the bag.
 
 ## How we work
 - Before changing anything, understand the stock-reservation and PayHere rules in `services/api/src/modules/`
